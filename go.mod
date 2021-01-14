@@ -1,4 +1,4 @@
-module github.com/EntropyPool/service-register
+module github.com/NpoolRD/service-register
 
 go 1.15
 
