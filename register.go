@@ -15,6 +15,8 @@ var etcdEndpoints = []string{"etcd.npool.com:2379"}
 const (
 	ActionPut    = "put"
 	ActionDelete = "delete"
+	LeaseExpire  = 30  //租约有效期，单位s
+	EtcdPrefix   = "root/"
 )
 
 type Event struct {
@@ -35,7 +37,7 @@ func init() {
 }
 
 func Register(k, v string) error {
-	_, err := cli.Put(context.TODO(), k, v)
+	_, err := cli.Put(context.TODO(), EtcdPrefix + k, v)
 	if nil != err {
 		return err
 	}
@@ -43,13 +45,13 @@ func Register(k, v string) error {
 }
 
 func Query(k string) ([]string, error) {
-	resp, err := cli.Get(context.TODO(), k)
+	resp, err := cli.Get(context.TODO(), EtcdPrefix + k)
 	if nil != err {
 		return nil, err
 	}
 	vals := make([]string, 0)
 	for _, kv := range resp.Kvs {
-		if string(kv.Key) == k {
+		if string(kv.Key) == (EtcdPrefix + k) {
 			vals = append(vals, string(kv.Value))
 		}
 	}
@@ -92,9 +94,21 @@ func watchHandler(ch clientv3.WatchChan, cb func(ev Event)) {
 }
 
 func Watch(k string, cb func(ev Event)) {
+	k = EtcdPrefix + k
 	if nil == cb {
 		elog.Fatalf(elog.Fields{}, "miss key watch handler for %v", k)
 	}
 	ch := cli.Watch(context.TODO(), k)
 	go watchHandler(ch, cb)
+}
+
+func HeartBeat() {
+	for {
+		_, err := cli.Lease.Grant(context.TODO(), LeaseExpire)
+		if err != nil {
+			elog.Errorf(elog.Fields{}, "lease grant failed: " + err.Error())
+		}
+
+		time.Sleep(time.Second * 3)
+	}
 }
