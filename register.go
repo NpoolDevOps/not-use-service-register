@@ -41,6 +41,9 @@ func Register(k, v string) error {
 	if nil != err {
 		return err
 	}
+
+	go heartBeat()
+
 	return nil
 }
 
@@ -102,7 +105,7 @@ func Watch(k string, cb func(ev Event)) {
 	go watchHandler(ch, cb)
 }
 
-func HeartBeat() {
+func heartBeat() {
 	for {
 		_, err := cli.Lease.Grant(context.TODO(), LeaseExpire)
 		if err != nil {
