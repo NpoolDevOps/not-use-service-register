@@ -25,6 +25,11 @@ type Event struct {
 	Event string
 }
 
+type SrvInfo struct {
+	Target  string   `json:"target"`
+	IpPorts []string `json:"ip_ports"`
+}
+
 func init() {
 	var err error
 	cli, err = clientv3.New(clientv3.Config{
@@ -114,4 +119,21 @@ func heartBeat() {
 
 		time.Sleep(time.Second * 3)
 	}
+}
+
+func BatchQuery(srvKeys []string) []SrvInfo {
+	var srvInfos []SrvInfo
+	for _, srvKey := range srvKeys {
+		ips, err := Query(srvKey)
+		if err != nil {
+			elog.Errorf(elog.Fields{}, "miss value for %v", srvKey)
+		}
+
+		srvInfos = append(srvInfos, SrvInfo{
+			Target: srvKey,
+			IpPorts: ips,
+		})
+	}
+
+	return srvInfos
 }

@@ -12,6 +12,10 @@ func TestQuery(t *testing.T) {
 	Query("domain_auth.npool.com")
 }
 
+func TestBatchQuery(t *testing.T) {
+	BatchQuery([]string{"domain_auth.npool.com"})
+}
+
 func TestWatch(t *testing.T) {
 	Watch("domain_auth.npool.com", func(ev Event) {
 		t.Logf("event: %v", ev)
